@@ -211,6 +211,36 @@ describe('Type System: build schema from introspection', () => {
     expect(cycleIntrospection(sdl)).to.equal(sdl);
   });
 
+  it('builds a schema with an interface heirarchy', () => {
+    const sdl = dedent`
+      type Dog implements Friendly & Named {
+        bestFriend: Friendly
+        name: String
+      }
+
+      interface Friendly implements Named {
+        """The best friend of this friendly thing"""
+        bestFriend: Friendly
+        name: String
+      }
+
+      type Human implements Friendly & Named {
+        bestFriend: Friendly
+        name: String
+      }
+
+      interface Named {
+        name: String
+      }
+
+      type Query {
+        friendly: Friendly
+      }
+    `;
+
+    expect(cycleIntrospection(sdl)).to.equal(sdl);
+  });
+
   it('builds a schema with an implicit interface', () => {
     const sdl = dedent`
       type Dog implements Friendly {

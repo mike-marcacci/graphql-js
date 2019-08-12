@@ -252,9 +252,17 @@ export function buildClientSchema(
   function buildInterfaceDef(
     interfaceIntrospection: IntrospectionInterfaceType,
   ): GraphQLInterfaceType {
+    if (!interfaceIntrospection.interfaces) {
+      throw new Error(
+        'Introspection result missing interfaces: ' +
+          inspect(interfaceIntrospection),
+      );
+    }
+
     return new GraphQLInterfaceType({
       name: interfaceIntrospection.name,
       description: interfaceIntrospection.description,
+      interfaces: () => interfaceIntrospection.interfaces.map(getInterfaceType),
       fields: () => buildFieldDefMap(interfaceIntrospection),
     });
   }

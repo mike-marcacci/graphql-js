@@ -190,7 +190,7 @@ function findTypeChanges(
     } else if (isObjectType(oldType) && isObjectType(newType)) {
       schemaChanges.push(...findObjectTypeChanges(oldType, newType));
     } else if (isInterfaceType(oldType) && isInterfaceType(newType)) {
-      schemaChanges.push(...findFieldChanges(oldType, newType));
+      schemaChanges.push(...findInterfaceTypeChanges(oldType, newType));
     } else if (oldType.constructor !== newType.constructor) {
       schemaChanges.push({
         type: BreakingChangeType.TYPE_CHANGED_KIND,
@@ -304,6 +304,30 @@ function findEnumTypeChanges(
 function findObjectTypeChanges(
   oldType: GraphQLObjectType,
   newType: GraphQLObjectType,
+): Array<BreakingChange | DangerousChange> {
+  const schemaChanges = findFieldChanges(oldType, newType);
+  const interfacesDiff = diff(oldType.getInterfaces(), newType.getInterfaces());
+
+  for (const newInterface of interfacesDiff.added) {
+    schemaChanges.push({
+      type: DangerousChangeType.INTERFACE_ADDED_TO_OBJECT,
+      description: `${newInterface.name} added to interfaces implemented by ${oldType.name}.`,
+    });
+  }
+
+  for (const oldInterface of interfacesDiff.removed) {
+    schemaChanges.push({
+      type: BreakingChangeType.INTERFACE_REMOVED_FROM_OBJECT,
+      description: `${oldType.name} no longer implements interface ${oldInterface.name}.`,
+    });
+  }
+
+  return schemaChanges;
+}
+
+function findInterfaceTypeChanges(
+  oldType: GraphQLInterfaceType,
+  newType: GraphQLInterfaceType,
 ): Array<BreakingChange | DangerousChange> {
   const schemaChanges = findFieldChanges(oldType, newType);
   const interfacesDiff = diff(oldType.getInterfaces(), newType.getInterfaces());

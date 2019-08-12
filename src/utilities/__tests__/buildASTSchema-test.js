@@ -301,6 +301,27 @@ describe('Schema Builder', () => {
     expect(cycleSDL(sdl)).to.equal(sdl);
   });
 
+  it('Simple interface heirarchy', () => {
+    const sdl = dedent`
+      schema {
+        query: Child
+      }
+
+      interface Child implements Parent {
+        str: String
+      }
+
+      type Hello implements Parent & Child {
+        str: String
+      }
+
+      interface Parent {
+        str: String
+      }
+    `;
+    expect(cycleSDL(sdl)).to.equal(sdl);
+  });
+
   it('Empty enum', () => {
     const sdl = dedent`
       enum EmptyEnum
@@ -627,6 +648,23 @@ describe('Schema Builder', () => {
 
       type Query {
         iface: Iface
+      }
+    `;
+    expect(cycleSDL(sdl)).to.equal(sdl);
+  });
+
+  it('Unreferenced interface implementing referenced interface', () => {
+    const sdl = dedent`
+      interface Child implements Parent {
+        key: String
+      }
+
+      interface Parent {
+        key: String
+      }
+
+      type Query {
+        iface: Parent
       }
     `;
     expect(cycleSDL(sdl)).to.equal(sdl);

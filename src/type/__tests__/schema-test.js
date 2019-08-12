@@ -157,10 +157,16 @@ describe('Type System: Schema', () => {
         fields: {},
       });
 
-      const SomeSubtype = new GraphQLObjectType({
-        name: 'SomeSubtype',
+      const SomeImplementingInterface = new GraphQLInterfaceType({
+        name: 'SomeImplementingInterface',
         fields: {},
         interfaces: [SomeInterface],
+      });
+
+      const SomeImplementingObject = new GraphQLObjectType({
+        name: 'SomeImplementingObject',
+        fields: {},
+        interfaces: [SomeImplementingInterface, SomeInterface],
       });
 
       const schema = new GraphQLSchema({
@@ -170,11 +176,13 @@ describe('Type System: Schema', () => {
             iface: { type: SomeInterface },
           },
         }),
-        types: [SomeSubtype],
+        types: [SomeImplementingObject],
       });
 
       expect(schema.getType('SomeInterface')).to.equal(SomeInterface);
-      expect(schema.getType('SomeSubtype')).to.equal(SomeSubtype);
+      expect(schema.getType('SomeImplementingObject')).to.equal(
+        SomeImplementingObject,
+      );
     });
 
     it("includes interface's thunk subtypes in the type map", () => {
@@ -183,16 +191,35 @@ describe('Type System: Schema', () => {
         fields: {},
       });
 
-      const SomeSubtype = new GraphQLObjectType({
-        name: 'SomeSubtype',
+      const SomeImplementingInterface = new GraphQLInterfaceType({
+        name: 'SomeImplementingInterface',
         fields: {},
         interfaces: () => [SomeInterface],
       });
 
-      const schema = new GraphQLSchema({ types: [SomeSubtype] });
+      const SomeImplementingObject = new GraphQLObjectType({
+        name: 'SomeImplementingObject',
+        fields: {},
+        interfaces: () => [SomeInterface, SomeImplementingInterface],
+      });
+
+      const schema = new GraphQLSchema({
+        query: new GraphQLObjectType({
+          name: 'Query',
+          fields: {
+            iface: { type: SomeImplementingInterface },
+          },
+        }),
+        types: [SomeImplementingObject],
+      });
 
       expect(schema.getType('SomeInterface')).to.equal(SomeInterface);
-      expect(schema.getType('SomeSubtype')).to.equal(SomeSubtype);
+      expect(schema.getType('SomeImplementingInterface')).to.equal(
+        SomeImplementingInterface,
+      );
+      expect(schema.getType('SomeImplementingObject')).to.equal(
+        SomeImplementingObject,
+      );
     });
 
     it('includes nested input objects in the map', () => {

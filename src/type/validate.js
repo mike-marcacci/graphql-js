@@ -236,10 +236,13 @@ function validateTypes(context: SchemaValidationContext): void {
       validateFields(context, type);
 
       // Ensure objects implement the interfaces they claim to.
-      validateObjectInterfaces(context, type);
+      validateInterfaces(context, type);
     } else if (isInterfaceType(type)) {
       // Ensure fields are valid.
       validateFields(context, type);
+
+      // Ensure interfaces implement the interfaces they claim to.
+      validateInterfaces(context, type);
     } else if (isUnionType(type)) {
       // Ensure Unions include valid member types.
       validateUnionMembers(context, type);
@@ -314,78 +317,94 @@ function validateFields(
   }
 }
 
-function validateObjectInterfaces(
+function validateInterfaces(
   context: SchemaValidationContext,
-  object: GraphQLObjectType,
+  implementing: GraphQLObjectType | GraphQLInterfaceType,
 ): void {
   const implementedTypeNames = Object.create(null);
-  for (const iface of object.getInterfaces()) {
-    if (!isInterfaceType(iface)) {
+  for (const implemented of implementing.getInterfaces()) {
+    if (!isInterfaceType(implemented)) {
       context.reportError(
-        `Type ${inspect(object)} must only implement Interface types, ` +
-          `it cannot implement ${inspect(iface)}.`,
-        getAllImplementsInterfaceNodes(object, iface),
+        `Type ${inspect(implementing)} must only implement Interface types, ` +
+          `it cannot implement ${inspect(implemented)}.`,
+        getAllImplementsInterfaceNodes(implementing, implemented),
       );
       continue;
     }
 
-    if (implementedTypeNames[iface.name]) {
+    if (implementedTypeNames[implemented.name]) {
       context.reportError(
-        `Type ${object.name} can only implement ${iface.name} once.`,
-        getAllImplementsInterfaceNodes(object, iface),
+        `Type ${implementing.name} can only implement ${implemented.name} once.`,
+        getAllImplementsInterfaceNodes(implementing, implemented),
       );
       continue;
     }
-    implementedTypeNames[iface.name] = true;
-    validateObjectImplementsInterface(context, object, iface);
+    implementedTypeNames[implemented.name] = true;
+    validateImplementsInterface(context, implementing, implemented);
   }
 }
 
-function validateObjectImplementsInterface(
+function validateImplementsInterface(
   context: SchemaValidationContext,
-  object: GraphQLObjectType,
-  iface: GraphQLInterfaceType,
+  implementing: GraphQLObjectType | GraphQLInterfaceType,
+  implemented: GraphQLInterfaceType,
 ): void {
-  const objectFieldMap = object.getFields();
-  const ifaceFieldMap = iface.getFields();
+  const implementingFieldMap = implementing.getFields();
+  const implementedFieldMap = implemented.getFields();
+
+  // Assert each ancestor interface is explicitly implemented.
+  validateImplementsAncestors(context, implementing, implemented);
 
   // Assert each interface field is implemented.
-  for (const [fieldName, ifaceField] of objectEntries(ifaceFieldMap)) {
-    const objectField = objectFieldMap[fieldName];
+  for (const [fieldName, implementedField] of objectEntries(
+    implementedFieldMap,
+  )) {
+    const implementingField = implementingFieldMap[fieldName];
 
-    // Assert interface field exists on object.
-    if (!objectField) {
+    // Assert interface field exists on implementing.
+    if (!implementingField) {
       context.reportError(
-        `Interface field ${iface.name}.${fieldName} expected but ${object.name} does not provide it.`,
-        [ifaceField.astNode, ...getAllNodes(object)],
+        `Interface field ${implemented.name}.${fieldName} expected but ${implementing.name} does not provide it.`,
+        [implementedField.astNode, ...getAllNodes(implementing)],
       );
       continue;
     }
 
-    // Assert interface field type is satisfied by object field type, by being
+    // Assert interface field type is satisfied by implementing field type, by being
     // a valid subtype. (covariant)
-    if (!isTypeSubTypeOf(context.schema, objectField.type, ifaceField.type)) {
+    if (
+      !isTypeSubTypeOf(
+        context.schema,
+        implementingField.type,
+        implementedField.type,
+      )
+    ) {
       context.reportError(
-        `Interface field ${iface.name}.${fieldName} expects type ` +
-          `${inspect(ifaceField.type)} but ${object.name}.${fieldName} ` +
-          `is type ${inspect(objectField.type)}.`,
+        `Interface field ${implemented.name}.${fieldName} expects type ` +
+          `${inspect(implementedField.type)} but ${
+            implementing.name
+          }.${fieldName} ` +
+          `is type ${inspect(implementingField.type)}.`,
         [
-          ifaceField.astNode && ifaceField.astNode.type,
-          objectField.astNode && objectField.astNode.type,
+          implementedField.astNode && implementedField.astNode.type,
+          implementingField.astNode && implementingField.astNode.type,
         ],
       );
     }
 
     // Assert each interface field arg is implemented.
-    for (const ifaceArg of ifaceField.args) {
-      const argName = ifaceArg.name;
-      const objectArg = find(objectField.args, arg => arg.name === argName);
+    for (const implementedArg of implementedField.args) {
+      const argName = implementedArg.name;
+      const implementingArg = find(
+        implementingField.args,
+        arg => arg.name === argName,
+      );
 
       // Assert interface field arg exists on object field.
-      if (!objectArg) {
+      if (!implementingArg) {
         context.reportError(
-          `Interface field argument ${iface.name}.${fieldName}(${argName}:) expected but ${object.name}.${fieldName} does not provide it.`,
-          [ifaceArg.astNode, objectField.astNode],
+          `Interface field argument ${implemented.name}.${fieldName}(${argName}:) expected but ${implementing.name}.${fieldName} does not provide it.`,
+          [implementedArg.astNode, implementingField.astNode],
         );
         continue;
       }
@@ -393,15 +412,15 @@ function validateObjectImplementsInterface(
       // Assert interface field arg type matches object field arg type.
       // (invariant)
       // TODO: change to contravariant?
-      if (!isEqualType(ifaceArg.type, objectArg.type)) {
+      if (!isEqualType(implementedArg.type, implementingArg.type)) {
         context.reportError(
-          `Interface field argument ${iface.name}.${fieldName}(${argName}:) ` +
-            `expects type ${inspect(ifaceArg.type)} but ` +
-            `${object.name}.${fieldName}(${argName}:) is type ` +
-            `${inspect(objectArg.type)}.`,
+          `Interface field argument ${implemented.name}.${fieldName}(${argName}:) ` +
+            `expects type ${inspect(implementedArg.type)} but ` +
+            `${implementing.name}.${fieldName}(${argName}:) is type ` +
+            `${inspect(implementingArg.type)}.`,
           [
-            ifaceArg.astNode && ifaceArg.astNode.type,
-            objectArg.astNode && objectArg.astNode.type,
+            implementedArg.astNode && implementedArg.astNode.type,
+            implementingArg.astNode && implementingArg.astNode.type,
           ],
         );
       }
@@ -410,17 +429,40 @@ function validateObjectImplementsInterface(
     }
 
     // Assert additional arguments must not be required.
-    for (const objectArg of objectField.args) {
-      const argName = objectArg.name;
-      const ifaceArg = find(ifaceField.args, arg => arg.name === argName);
-      if (!ifaceArg && isRequiredArgument(objectArg)) {
+    for (const implementingArg of implementingField.args) {
+      const argName = implementingArg.name;
+      const implementedArg = find(
+        implementedField.args,
+        arg => arg.name === argName,
+      );
+      if (!implementedArg && isRequiredArgument(implementingArg)) {
         context.reportError(
-          `Object field ${object.name}.${fieldName} includes required argument ${argName} that is missing from the Interface field ${iface.name}.${fieldName}.`,
-          [objectArg.astNode, ifaceField.astNode],
+          `Object field ${implementing.name}.${fieldName} includes required argument ${argName} that is missing from the Interface field ${implemented.name}.${fieldName}.`,
+          [implementingArg.astNode, implementedField.astNode],
         );
       }
     }
   }
+}
+
+function validateImplementsAncestors(
+  context: SchemaValidationContext,
+  implementing: GraphQLObjectType | GraphQLInterfaceType,
+  implemented: GraphQLInterfaceType,
+): void {
+  const implementingInterfaces = implementing.getInterfaces();
+  implemented.getInterfaces().forEach(transitive => {
+    if (!implementingInterfaces.includes(transitive)) {
+      context.reportError(
+        `${isObjectType(implementing) ? 'Object' : 'Interface'} type ${
+          implementing.name
+        } must implement ${transitive.name} because it is implemented by ${
+          implemented.name
+        }.`,
+        getAllImplementsInterfaceNodes(implementing, implemented),
+      );
+    }
+  });
 }
 
 function validateUnionMembers(
@@ -589,7 +631,7 @@ function getAllSubNodes<T: ASTNode, K: ASTNode, L: ASTNode>(
 }
 
 function getAllImplementsInterfaceNodes(
-  type: GraphQLObjectType,
+  type: GraphQLObjectType | GraphQLInterfaceType,
   iface: GraphQLInterfaceType,
 ): $ReadOnlyArray<NamedTypeNode> {
   return getAllSubNodes(type, typeNode => typeNode.interfaces).filter(

@@ -32,6 +32,7 @@ import {
   type GraphQLNamedType,
   type GraphQLAbstractType,
   type GraphQLObjectType,
+  type GraphQLInterfaceType,
   isObjectType,
   isInterfaceType,
   isUnionType,
@@ -129,7 +130,8 @@ export class GraphQLSchema {
   _subscriptionType: ?GraphQLObjectType;
   _directives: $ReadOnlyArray<GraphQLDirective>;
   _typeMap: TypeMap;
-  _implementations: ObjMap<Array<GraphQLObjectType>>;
+  _implementations: ObjMap<Array<GraphQLObjectType | GraphQLInterfaceType>>;
+  _objectImplementations: ObjMap<Array<GraphQLObjectType>>;
   _possibleTypeMap: ObjMap<ObjMap<boolean>>;
   // Used as a cache for validateSchema().
   __validationErrors: ?$ReadOnlyArray<GraphQLError>;
@@ -190,15 +192,27 @@ export class GraphQLSchema {
 
     // Keep track of all implementations by interface name.
     this._implementations = Object.create(null);
+    this._objectImplementations = Object.create(null);
     for (const type of objectValues(this._typeMap)) {
-      if (isObjectType(type)) {
+      if (isObjectType(type) || isInterfaceType(type)) {
         for (const iface of type.getInterfaces()) {
           if (isInterfaceType(iface)) {
+            // Store implementations by objects and interfaces.
             const impls = this._implementations[iface.name];
             if (impls) {
               impls.push(type);
             } else {
               this._implementations[iface.name] = [type];
+            }
+
+            // Store implementations by objects only.
+            if (isObjectType(type)) {
+              const objImpls = this._objectImplementations[iface.name];
+              if (objImpls) {
+                objImpls.push(type);
+              } else {
+                this._objectImplementations[iface.name] = [type];
+              }
             }
           }
         }
@@ -232,7 +246,24 @@ export class GraphQLSchema {
     if (isUnionType(abstractType)) {
       return abstractType.getTypes();
     }
-    return this._implementations[abstractType.name] || [];
+
+    const types = this._objectImplementations[abstractType.name];
+    if (!types) {
+      return (this._objectImplementations[abstractType.name] = []);
+    }
+
+    return types;
+  }
+
+  getImplementations(
+    interfaceType: GraphQLInterfaceType,
+  ): $ReadOnlyArray<GraphQLObjectType | GraphQLInterfaceType> {
+    const implementations = this._implementations[interfaceType.name];
+    if (!implementations) {
+      return (this._implementations[interfaceType.name] = []);
+    }
+
+    return implementations;
   }
 
   isPossibleType(
@@ -248,6 +279,13 @@ export class GraphQLSchema {
     }
 
     return this._possibleTypeMap[abstractType.name][possibleType.name] != null;
+  }
+
+  isImplementation(
+    interfaceType: GraphQLInterfaceType,
+    possibleType: GraphQLObjectType | GraphQLInterfaceType,
+  ): boolean {
+    return this.getImplementations(interfaceType).includes(possibleType);
   }
 
   getDirectives(): $ReadOnlyArray<GraphQLDirective> {
