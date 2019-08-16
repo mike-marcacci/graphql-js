@@ -285,6 +285,12 @@ describe('Schema Builder', () => {
     const sdl = dedent`
       interface EmptyInterface
     `;
+
+    const definition = parse(sdl).definitions[0];
+    expect(
+      definition.kind === 'InterfaceTypeDefinition' && definition.interfaces,
+    ).to.deep.equal([], 'The interfaces property must be an empty array.');
+
     expect(cycleSDL(sdl)).to.equal(sdl);
   });
 
