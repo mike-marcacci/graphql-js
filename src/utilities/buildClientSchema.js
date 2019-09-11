@@ -232,19 +232,28 @@ export function buildClientSchema(
     });
   }
 
+  function buildImplementationsList(
+    implementingIntrospection:
+      | IntrospectionObjectType
+      | IntrospectionInterfaceType,
+  ) {
+    if (!implementingIntrospection.interfaces) {
+      throw new Error(
+        'Introspection result missing interfaces: ' +
+          inspect(implementingIntrospection),
+      );
+    }
+
+    return implementingIntrospection.interfaces.map(getInterfaceType);
+  }
+
   function buildObjectDef(
     objectIntrospection: IntrospectionObjectType,
   ): GraphQLObjectType {
-    if (!objectIntrospection.interfaces) {
-      throw new Error(
-        'Introspection result missing interfaces: ' +
-          inspect(objectIntrospection),
-      );
-    }
     return new GraphQLObjectType({
       name: objectIntrospection.name,
       description: objectIntrospection.description,
-      interfaces: () => objectIntrospection.interfaces.map(getInterfaceType),
+      interfaces: () => buildImplementationsList(objectIntrospection),
       fields: () => buildFieldDefMap(objectIntrospection),
     });
   }
@@ -252,17 +261,10 @@ export function buildClientSchema(
   function buildInterfaceDef(
     interfaceIntrospection: IntrospectionInterfaceType,
   ): GraphQLInterfaceType {
-    if (!interfaceIntrospection.interfaces) {
-      throw new Error(
-        'Introspection result missing interfaces: ' +
-          inspect(interfaceIntrospection),
-      );
-    }
-
     return new GraphQLInterfaceType({
       name: interfaceIntrospection.name,
       description: interfaceIntrospection.description,
-      interfaces: () => interfaceIntrospection.interfaces.map(getInterfaceType),
+      interfaces: () => buildImplementationsList(interfaceIntrospection),
       fields: () => buildFieldDefMap(interfaceIntrospection),
     });
   }
