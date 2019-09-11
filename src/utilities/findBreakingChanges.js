@@ -301,11 +301,11 @@ function findEnumTypeChanges(
   return schemaChanges;
 }
 
-function findObjectTypeChanges(
-  oldType: GraphQLObjectType,
-  newType: GraphQLObjectType,
+function findImplementedInterfacesChanges(
+  oldType: GraphQLObjectType | GraphQLInterfaceType,
+  newType: GraphQLObjectType | GraphQLInterfaceType,
 ): Array<BreakingChange | DangerousChange> {
-  const schemaChanges = findFieldChanges(oldType, newType);
+  const schemaChanges = [];
   const interfacesDiff = diff(oldType.getInterfaces(), newType.getInterfaces());
 
   for (const newInterface of interfacesDiff.added) {
@@ -325,28 +325,24 @@ function findObjectTypeChanges(
   return schemaChanges;
 }
 
+function findObjectTypeChanges(
+  oldType: GraphQLObjectType,
+  newType: GraphQLObjectType,
+): Array<BreakingChange | DangerousChange> {
+  return [
+    ...findFieldChanges(oldType, newType),
+    ...findImplementedInterfacesChanges(oldType, newType),
+  ];
+}
+
 function findInterfaceTypeChanges(
   oldType: GraphQLInterfaceType,
   newType: GraphQLInterfaceType,
 ): Array<BreakingChange | DangerousChange> {
-  const schemaChanges = findFieldChanges(oldType, newType);
-  const interfacesDiff = diff(oldType.getInterfaces(), newType.getInterfaces());
-
-  for (const newInterface of interfacesDiff.added) {
-    schemaChanges.push({
-      type: DangerousChangeType.INTERFACE_ADDED_TO_OBJECT,
-      description: `${newInterface.name} added to interfaces implemented by ${oldType.name}.`,
-    });
-  }
-
-  for (const oldInterface of interfacesDiff.removed) {
-    schemaChanges.push({
-      type: BreakingChangeType.INTERFACE_REMOVED_FROM_OBJECT,
-      description: `${oldType.name} no longer implements interface ${oldInterface.name}.`,
-    });
-  }
-
-  return schemaChanges;
+  return [
+    ...findFieldChanges(oldType, newType),
+    ...findImplementedInterfacesChanges(oldType, newType),
+  ];
 }
 
 function findFieldChanges(
