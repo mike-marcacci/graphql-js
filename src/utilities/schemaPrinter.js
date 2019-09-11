@@ -193,7 +193,8 @@ function printImplementedInterfaces(
 function printObject(type: GraphQLObjectType, options): string {
   return (
     printDescription(options, type) +
-    `type ${type.name}${printImplementedInterfaces(type)}` +
+    `type ${type.name}` +
+    printImplementedInterfaces(type) +
     printFields(options, type)
   );
 }
@@ -201,7 +202,8 @@ function printObject(type: GraphQLObjectType, options): string {
 function printInterface(type: GraphQLInterfaceType, options): string {
   return (
     printDescription(options, type) +
-    `interface ${type.name}${printImplementedInterfaces(type)}` +
+    `interface ${type.name}` +
+    printImplementedInterfaces(type) +
     printFields(options, type)
   );
 }

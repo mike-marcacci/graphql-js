@@ -188,9 +188,15 @@ function findTypeChanges(
     } else if (isInputObjectType(oldType) && isInputObjectType(newType)) {
       schemaChanges.push(...findInputObjectTypeChanges(oldType, newType));
     } else if (isObjectType(oldType) && isObjectType(newType)) {
-      schemaChanges.push(...findObjectTypeChanges(oldType, newType));
+      schemaChanges.push(
+        ...findFieldChanges(oldType, newType),
+        ...findImplementedInterfacesChanges(oldType, newType),
+      );
     } else if (isInterfaceType(oldType) && isInterfaceType(newType)) {
-      schemaChanges.push(...findInterfaceTypeChanges(oldType, newType));
+      schemaChanges.push(
+        ...findFieldChanges(oldType, newType),
+        ...findImplementedInterfacesChanges(oldType, newType),
+      );
     } else if (oldType.constructor !== newType.constructor) {
       schemaChanges.push({
         type: BreakingChangeType.TYPE_CHANGED_KIND,
@@ -323,26 +329,6 @@ function findImplementedInterfacesChanges(
   }
 
   return schemaChanges;
-}
-
-function findObjectTypeChanges(
-  oldType: GraphQLObjectType,
-  newType: GraphQLObjectType,
-): Array<BreakingChange | DangerousChange> {
-  return [
-    ...findFieldChanges(oldType, newType),
-    ...findImplementedInterfacesChanges(oldType, newType),
-  ];
-}
-
-function findInterfaceTypeChanges(
-  oldType: GraphQLInterfaceType,
-  newType: GraphQLInterfaceType,
-): Array<BreakingChange | DangerousChange> {
-  return [
-    ...findFieldChanges(oldType, newType),
-    ...findImplementedInterfacesChanges(oldType, newType),
-  ];
 }
 
 function findFieldChanges(
