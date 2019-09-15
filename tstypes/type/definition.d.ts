@@ -387,6 +387,7 @@ export class GraphQLObjectType<
   toConfig(): GraphQLObjectTypeConfig<any, any> & {
     interfaces: GraphQLInterfaceType[];
     fields: GraphQLFieldConfigMap<any, any>;
+    extensions: Maybe<Readonly<Record<string, any>>>;
     extensionASTNodes: ReadonlyArray<ObjectTypeExtensionNode>;
   };
 
@@ -559,10 +560,11 @@ export class GraphQLInterfaceType {
   extensionASTNodes: Maybe<ReadonlyArray<InterfaceTypeExtensionNode>>;
 
   constructor(config: GraphQLInterfaceTypeConfig<any, any>);
-
   getFields(): GraphQLFieldMap<any, any>;
+  getInterfaces(): GraphQLInterfaceType[];
 
   toConfig(): GraphQLInterfaceTypeConfig<any, any> & {
+    interfaces: GraphQLInterfaceType[];
     fields: GraphQLFieldConfigMap<any, any>;
     extensions: Maybe<Readonly<Record<string, any>>>;
     extensionASTNodes: ReadonlyArray<InterfaceTypeExtensionNode>;
@@ -581,6 +583,7 @@ export interface GraphQLInterfaceTypeConfig<
 > {
   name: string;
   description?: Maybe<string>;
+  interfaces?: Thunk<Maybe<GraphQLInterfaceType[]>>;
   fields: Thunk<GraphQLFieldConfigMap<TSource, TContext, TArgs>>;
   /**
    * Optionally provide a custom type resolver function. If one is not provided,
