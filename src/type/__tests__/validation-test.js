@@ -2334,4 +2334,33 @@ describe('Interfaces must adhere to Interface they implement', () => {
       },
     ]);
   });
+
+  it('rejects a circular Interface implementation', () => {
+    const schema = buildSchema(`
+      type Query {
+        test: FooInterface
+      }
+
+      interface FooInterface implements BarIntereface {
+        field: String
+      }
+
+      interface BarIntereface implements FooInterface {
+        field: String
+      }
+    `);
+
+    expect(validateSchema(schema)).to.deep.equal([
+      {
+        message:
+          'Interface type FooInterface cannot implement BarIntereface because it would create a circular reference.',
+        locations: [{ line: 6, column: 41 }],
+      },
+      {
+        message:
+          'Interface type BarIntereface cannot implement FooInterface because it would create a circular reference.',
+        locations: [{ line: 10, column: 42 }],
+      },
+    ]);
+  });
 });

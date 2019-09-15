@@ -453,14 +453,25 @@ function validateImplementsAncestors(
   const implementingInterfaces = implementing.getInterfaces();
   implemented.getInterfaces().forEach(transitive => {
     if (!implementingInterfaces.includes(transitive)) {
-      context.reportError(
-        `${isObjectType(implementing) ? 'Object' : 'Interface'} type ${
-          implementing.name
-        } must implement ${transitive.name} because it is implemented by ${
-          implemented.name
-        }.`,
-        getAllImplementsInterfaceNodes(implementing, implemented),
-      );
+      if (transitive === implementing) {
+        context.reportError(
+          `${isObjectType(implementing) ? 'Object' : 'Interface'} type ${
+            implementing.name
+          } cannot implement ${
+            implemented.name
+          } because it would create a circular reference.`,
+          getAllImplementsInterfaceNodes(implementing, implemented),
+        );
+      } else {
+        context.reportError(
+          `${isObjectType(implementing) ? 'Object' : 'Interface'} type ${
+            implementing.name
+          } must implement ${transitive.name} because it is implemented by ${
+            implemented.name
+          }.`,
+          getAllImplementsInterfaceNodes(implementing, implemented),
+        );
+      }
     }
   });
 }
