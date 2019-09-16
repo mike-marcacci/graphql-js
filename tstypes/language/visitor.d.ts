@@ -122,12 +122,13 @@ export const QueryDocumentKeys: {
     'defaultValue',
     'directives'
   ];
+  // prettier-ignore
   InterfaceTypeDefinition: [
     'description',
     'name',
     'interfaces',
     'directives',
-    'fields',
+    'fields'
   ];
   UnionTypeDefinition: ['description', 'name', 'directives', 'types'];
   EnumTypeDefinition: ['description', 'name', 'directives', 'values'];
