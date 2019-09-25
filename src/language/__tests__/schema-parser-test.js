@@ -320,13 +320,11 @@ describe('Schema Parser', () => {
       locations: [{ line: 3, column: 7 }],
     });
 
-    expectSyntaxError(
-      `
+    expectSyntaxError(`
       extend "Description" interface Hello {
         world: String
       }
-    `,
-    ).to.deep.equal({
+    `).to.deep.equal({
       message: 'Syntax Error: Unexpected String "Description".',
       locations: [{ line: 2, column: 14 }],
     });
