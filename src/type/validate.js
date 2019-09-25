@@ -340,6 +340,7 @@ function validateInterfaces(
       continue;
     }
     implementedTypeNames[iface.name] = true;
+    validateImplementsAncestors(context, type, iface);
     validateImplementsInterface(context, type, iface);
   }
 }
@@ -351,9 +352,6 @@ function validateImplementsInterface(
 ): void {
   const implementingFieldMap = implementing.getFields();
   const implementedFieldMap = implemented.getFields();
-
-  // Assert each ancestor interface is explicitly implemented.
-  validateImplementsAncestors(context, implementing, implemented);
 
   // Assert each interface field is implemented.
   for (const [fieldName, implementedField] of objectEntries(
