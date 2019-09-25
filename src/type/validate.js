@@ -319,28 +319,28 @@ function validateFields(
 
 function validateInterfaces(
   context: SchemaValidationContext,
-  implementing: GraphQLObjectType | GraphQLInterfaceType,
+  type: GraphQLObjectType | GraphQLInterfaceType,
 ): void {
   const implementedTypeNames = Object.create(null);
-  for (const implemented of implementing.getInterfaces()) {
-    if (!isInterfaceType(implemented)) {
+  for (const iface of type.getInterfaces()) {
+    if (!isInterfaceType(iface)) {
       context.reportError(
-        `Type ${inspect(implementing)} must only implement Interface types, ` +
-          `it cannot implement ${inspect(implemented)}.`,
-        getAllImplementsInterfaceNodes(implementing, implemented),
+        `Type ${inspect(type)} must only implement Interface types, ` +
+          `it cannot implement ${inspect(iface)}.`,
+        getAllImplementsInterfaceNodes(type, iface),
       );
       continue;
     }
 
-    if (implementedTypeNames[implemented.name]) {
+    if (implementedTypeNames[iface.name]) {
       context.reportError(
-        `Type ${implementing.name} can only implement ${implemented.name} once.`,
-        getAllImplementsInterfaceNodes(implementing, implemented),
+        `Type ${type.name} can only implement ${iface.name} once.`,
+        getAllImplementsInterfaceNodes(type, iface),
       );
       continue;
     }
-    implementedTypeNames[implemented.name] = true;
-    validateImplementsInterface(context, implementing, implemented);
+    implementedTypeNames[iface.name] = true;
+    validateImplementsInterface(context, type, iface);
   }
 }
 
@@ -451,29 +451,17 @@ function validateImplementsAncestors(
   implemented: GraphQLInterfaceType,
 ): void {
   const implementingInterfaces = implementing.getInterfaces();
-  implemented.getInterfaces().forEach(transitive => {
+  for (const transitive of implemented.getInterfaces()) {
     if (!implementingInterfaces.includes(transitive)) {
-      if (transitive === implementing) {
-        context.reportError(
-          `${isObjectType(implementing) ? 'Object' : 'Interface'} type ${
-            implementing.name
-          } cannot implement ${
-            implemented.name
-          } because it would create a circular reference.`,
-          getAllImplementsInterfaceNodes(implementing, implemented),
-        );
-      } else {
-        context.reportError(
-          `${isObjectType(implementing) ? 'Object' : 'Interface'} type ${
-            implementing.name
-          } must implement ${transitive.name} because it is implemented by ${
-            implemented.name
-          }.`,
-          getAllImplementsInterfaceNodes(implementing, implemented),
-        );
-      }
+      const typeKindStr = isObjectType(implementing) ? 'Object' : 'Interface';
+      context.reportError(
+        transitive === implementing
+          ? `${typeKindStr} type ${implementing.name} cannot implement ${implemented.name} because it would create a circular reference.`
+          : `${typeKindStr} type ${implementing.name} must implement ${transitive.name} because it is implemented by ${implemented.name}.`,
+        getAllImplementsInterfaceNodes(implementing, implemented),
+      );
     }
-  });
+  }
 }
 
 function validateUnionMembers(

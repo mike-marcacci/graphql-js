@@ -289,14 +289,12 @@ describe('Schema Parser', () => {
   });
 
   it('Object extension do not include descriptions', () => {
-    expectSyntaxError(
-      `
+    expectSyntaxError(`
       "Description"
       extend type Hello {
         world: String
       }
-    `,
-    ).to.deep.equal({
+    `).to.deep.equal({
       message: 'Syntax Error: Unexpected Name "extend".',
       locations: [{ line: 3, column: 7 }],
     });
@@ -312,14 +310,12 @@ describe('Schema Parser', () => {
   });
 
   it('Interface extension do not include descriptions', () => {
-    expectSyntaxError(
-      `
+    expectSyntaxError(`
       "Description"
       extend interface Hello {
         world: String
       }
-    `,
-    ).to.deep.equal({
+    `).to.deep.equal({
       message: 'Syntax Error: Unexpected Name "extend".',
       locations: [{ line: 3, column: 7 }],
     });

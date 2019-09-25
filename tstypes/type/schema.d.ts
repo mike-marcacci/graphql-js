@@ -6,6 +6,7 @@ import {
   GraphQLNamedType,
   GraphQLAbstractType,
   GraphQLObjectType,
+  GraphQLInterfaceType,
 } from './definition';
 
 /**
@@ -56,9 +57,18 @@ export class GraphQLSchema {
     abstractType: GraphQLAbstractType,
   ): ReadonlyArray<GraphQLObjectType>;
 
+  getImplementations(
+    interfaceType: GraphQLInterfaceType,
+  ): ReadonlyArray<GraphQLObjectType | GraphQLInterfaceType>;
+
   isPossibleType(
     abstractType: GraphQLAbstractType,
     possibleType: GraphQLObjectType,
+  ): boolean;
+
+  isImplementation(
+    interfaceType: GraphQLInterfaceType,
+    possibleType: GraphQLObjectType | GraphQLInterfaceType,
   ): boolean;
 
   getDirectives(): ReadonlyArray<GraphQLDirective>;
