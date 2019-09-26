@@ -572,7 +572,7 @@ describe('findBreakingChanges', () => {
     ]);
   });
 
-  it('should detect interfaces removed from types', () => {
+  it('should detect interfaces removed from interfaces', () => {
     const oldSchema = buildSchema(`
       interface Interface1
 
@@ -587,7 +587,7 @@ describe('findBreakingChanges', () => {
 
     expect(findBreakingChanges(oldSchema, newSchema)).to.deep.equal([
       {
-        type: BreakingChangeType.INTERFACE_REMOVED_FROM_OBJECT,
+        type: BreakingChangeType.INTERFACE_REMOVED_FROM_INTERFACE,
         description: 'Interface2 no longer implements interface Interface1.',
       },
     ]);
@@ -1038,7 +1038,7 @@ describe('findDangerousChanges', () => {
 
     expect(findDangerousChanges(oldSchema, newSchema)).to.deep.equal([
       {
-        type: DangerousChangeType.INTERFACE_ADDED_TO_OBJECT,
+        type: DangerousChangeType.INTERFACE_ADDED_TO_INTERFACE,
         description:
           'NewInterface added to interfaces implemented by Interface1.',
       },

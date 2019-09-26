@@ -42,6 +42,7 @@ export const BreakingChangeType = Object.freeze({
   VALUE_REMOVED_FROM_ENUM: 'VALUE_REMOVED_FROM_ENUM',
   REQUIRED_INPUT_FIELD_ADDED: 'REQUIRED_INPUT_FIELD_ADDED',
   INTERFACE_REMOVED_FROM_OBJECT: 'INTERFACE_REMOVED_FROM_OBJECT',
+  INTERFACE_REMOVED_FROM_INTERFACE: 'INTERFACE_REMOVED_FROM_INTERFACE',
   FIELD_REMOVED: 'FIELD_REMOVED',
   FIELD_CHANGED_KIND: 'FIELD_CHANGED_KIND',
   REQUIRED_ARG_ADDED: 'REQUIRED_ARG_ADDED',
@@ -59,6 +60,7 @@ export const DangerousChangeType = Object.freeze({
   OPTIONAL_INPUT_FIELD_ADDED: 'OPTIONAL_INPUT_FIELD_ADDED',
   OPTIONAL_ARG_ADDED: 'OPTIONAL_ARG_ADDED',
   INTERFACE_ADDED_TO_OBJECT: 'INTERFACE_ADDED_TO_OBJECT',
+  INTERFACE_ADDED_TO_INTERFACE: 'INTERFACE_ADDED_TO_INTERFACE',
   ARG_DEFAULT_VALUE_CHANGE: 'ARG_DEFAULT_VALUE_CHANGE',
 });
 
@@ -316,14 +318,18 @@ function findImplementedInterfacesChanges(
 
   for (const newInterface of interfacesDiff.added) {
     schemaChanges.push({
-      type: DangerousChangeType.INTERFACE_ADDED_TO_OBJECT,
+      type: isInterfaceType(oldType)
+        ? DangerousChangeType.INTERFACE_ADDED_TO_INTERFACE
+        : DangerousChangeType.INTERFACE_ADDED_TO_OBJECT,
       description: `${newInterface.name} added to interfaces implemented by ${oldType.name}.`,
     });
   }
 
   for (const oldInterface of interfacesDiff.removed) {
     schemaChanges.push({
-      type: BreakingChangeType.INTERFACE_REMOVED_FROM_OBJECT,
+      type: isInterfaceType(oldType)
+        ? BreakingChangeType.INTERFACE_REMOVED_FROM_INTERFACE
+        : BreakingChangeType.INTERFACE_REMOVED_FROM_OBJECT,
       description: `${oldType.name} no longer implements interface ${oldInterface.name}.`,
     });
   }
