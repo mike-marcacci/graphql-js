@@ -163,8 +163,8 @@ describe('Type System: Schema', () => {
         interfaces: [SomeInterface],
       });
 
-      const SomeImplementingObject = new GraphQLObjectType({
-        name: 'SomeImplementingObject',
+      const SomeSubtype = new GraphQLObjectType({
+        name: 'SomeSubtype',
         fields: {},
         interfaces: [SomeImplementingInterface, SomeInterface],
       });
@@ -176,13 +176,11 @@ describe('Type System: Schema', () => {
             iface: { type: SomeInterface },
           },
         }),
-        types: [SomeImplementingObject],
+        types: [SomeSubtype],
       });
 
       expect(schema.getType('SomeInterface')).to.equal(SomeInterface);
-      expect(schema.getType('SomeImplementingObject')).to.equal(
-        SomeImplementingObject,
-      );
+      expect(schema.getType('SomeSubtype')).to.equal(SomeSubtype);
     });
 
     it("includes interface's thunk subtypes in the type map", () => {
@@ -197,8 +195,8 @@ describe('Type System: Schema', () => {
         interfaces: () => [SomeInterface],
       });
 
-      const SomeImplementingObject = new GraphQLObjectType({
-        name: 'SomeImplementingObject',
+      const SomeSubtype = new GraphQLObjectType({
+        name: 'SomeSubtype',
         fields: {},
         interfaces: () => [SomeInterface, SomeImplementingInterface],
       });
@@ -210,16 +208,14 @@ describe('Type System: Schema', () => {
             iface: { type: SomeImplementingInterface },
           },
         }),
-        types: [SomeImplementingObject],
+        types: [SomeSubtype],
       });
 
       expect(schema.getType('SomeInterface')).to.equal(SomeInterface);
       expect(schema.getType('SomeImplementingInterface')).to.equal(
         SomeImplementingInterface,
       );
-      expect(schema.getType('SomeImplementingObject')).to.equal(
-        SomeImplementingObject,
-      );
+      expect(schema.getType('SomeSubtype')).to.equal(SomeSubtype);
     });
 
     it('includes nested input objects in the map', () => {
