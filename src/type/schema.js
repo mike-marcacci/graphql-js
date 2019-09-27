@@ -285,7 +285,7 @@ export class GraphQLSchema {
     interfaceType: GraphQLInterfaceType,
     possibleType: GraphQLObjectType | GraphQLInterfaceType,
   ): boolean {
-    return this.getImplementations(interfaceType).includes(possibleType);
+    return this.getImplementations(interfaceType).indexOf(possibleType) !== -1;
   }
 
   getDirectives(): $ReadOnlyArray<GraphQLDirective> {

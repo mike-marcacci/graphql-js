@@ -448,7 +448,7 @@ function validateTypeImplementsAncestors(
 ): void {
   const implementingInterfaces = type.getInterfaces();
   for (const transitive of iface.getInterfaces()) {
-    if (!implementingInterfaces.includes(transitive)) {
+    if (implementingInterfaces.indexOf(transitive) === -1) {
       const typeKindStr = isObjectType(type) ? 'Object' : 'Interface';
       context.reportError(
         transitive === type
