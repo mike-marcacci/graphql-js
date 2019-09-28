@@ -103,7 +103,7 @@ function printTestSchemaChanges(extendedSchema) {
   return print({
     kind: Kind.DOCUMENT,
     definitions: ast.definitions.filter(
-      node => testSchemaDefinitions.indexOf(print(node)) === -1,
+      node => !testSchemaDefinitions.includes(print(node)),
     ),
   });
 }
