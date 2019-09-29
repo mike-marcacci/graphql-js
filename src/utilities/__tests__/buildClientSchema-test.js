@@ -582,6 +582,10 @@ describe('Type System: build schema from introspection', () => {
         foo(bar: String): String
       }
 
+      interface SomeInterface {
+        foo: String
+      }
+
       union SomeUnion = Query
 
       enum SomeEnum { FOO }
@@ -675,6 +679,20 @@ describe('Type System: build schema from introspection', () => {
       expect(() => buildClientSchema(introspection)).to.throw(
         'Introspection result missing interfaces: { kind: "OBJECT", name: "Query",',
       );
+    });
+
+    it('Legacy support for interfaces with null as interfaces field', () => {
+      const introspection = introspectionFromSchema(dummySchema);
+      const someInterfaceIntrospection = introspection.__schema.types.find(
+        ({ name }) => name === 'SomeInterface',
+      );
+
+      expect(someInterfaceIntrospection).to.have.property('interfaces');
+      // $DisableFlowOnNegativeTest
+      someInterfaceIntrospection.interfaces = null;
+
+      const clientSchema = buildClientSchema(introspection);
+      expect(printSchema(clientSchema)).to.equal(printSchema(dummySchema));
     });
 
     it('throws when missing fields', () => {
