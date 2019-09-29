@@ -1931,8 +1931,8 @@ describe('Objects must adhere to Interface they implement', () => {
     expect(validateSchema(schema)).to.deep.equal([
       {
         message:
-          'Object type AnotherObject must implement SuperInterface because it is implemented by AnotherInterface.',
-        locations: [{ line: 14, column: 37 }],
+          'Type AnotherObject must implement SuperInterface because it is implemented by AnotherInterface.',
+        locations: [{ line: 10, column: 45 }, { line: 14, column: 37 }],
       },
     ]);
   });
@@ -2329,8 +2329,28 @@ describe('Interfaces must adhere to Interface they implement', () => {
     expect(validateSchema(schema)).to.deep.equal([
       {
         message:
-          'Interface type ChildInterface must implement SuperInterface because it is implemented by ParentInterface.',
-        locations: [{ line: 14, column: 43 }],
+          'Type ChildInterface must implement SuperInterface because it is implemented by ParentInterface.',
+        locations: [{ line: 10, column: 44 }, { line: 14, column: 43 }],
+      },
+    ]);
+  });
+
+  it('rejects a self reference interface', () => {
+    const schema = buildSchema(`
+      type Query {
+        test: FooInterface
+      }
+
+      interface FooInterface implements FooInterface {
+        field: String
+      }
+    `);
+
+    expect(validateSchema(schema)).to.deep.equal([
+      {
+        message:
+          'Type FooInterface cannot implement itself because it would create a circular reference.',
+        locations: [{ line: 6, column: 41 }],
       },
     ]);
   });
@@ -2353,13 +2373,13 @@ describe('Interfaces must adhere to Interface they implement', () => {
     expect(validateSchema(schema)).to.deep.equal([
       {
         message:
-          'Interface type FooInterface cannot implement BarIntereface because it would create a circular reference.',
-        locations: [{ line: 6, column: 41 }],
+          'Type FooInterface cannot implement BarIntereface because it would create a circular reference.',
+        locations: [{ line: 10, column: 42 }, { line: 6, column: 41 }],
       },
       {
         message:
-          'Interface type BarIntereface cannot implement FooInterface because it would create a circular reference.',
-        locations: [{ line: 10, column: 42 }],
+          'Type BarIntereface cannot implement FooInterface because it would create a circular reference.',
+        locations: [{ line: 6, column: 41 }, { line: 10, column: 42 }],
       },
     ]);
   });

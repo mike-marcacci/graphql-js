@@ -332,6 +332,14 @@ function validateInterfaces(
       continue;
     }
 
+    if (type === iface) {
+      context.reportError(
+        `Type ${type.name} cannot implement itself because it would create a circular reference.`,
+        getAllImplementsInterfaceNodes(type, iface),
+      );
+      continue;
+    }
+
     if (implementedTypeNames[iface.name]) {
       context.reportError(
         `Type ${type.name} can only implement ${iface.name} once.`,
@@ -340,6 +348,7 @@ function validateInterfaces(
       continue;
     }
     implementedTypeNames[iface.name] = true;
+
     validateTypeImplementsAncestors(context, type, iface);
     validateTypeImplementsInterface(context, type, iface);
   }
@@ -446,15 +455,17 @@ function validateTypeImplementsAncestors(
   type: GraphQLObjectType | GraphQLInterfaceType,
   iface: GraphQLInterfaceType,
 ): void {
-  const implementingInterfaces = type.getInterfaces();
+  const implementedInterfaces = type.getInterfaces();
   for (const transitive of iface.getInterfaces()) {
-    if (implementingInterfaces.indexOf(transitive) === -1) {
-      const typeKindStr = isObjectType(type) ? 'Object' : 'Interface';
+    if (implementedInterfaces.indexOf(transitive) === -1) {
       context.reportError(
         transitive === type
-          ? `${typeKindStr} type ${type.name} cannot implement ${iface.name} because it would create a circular reference.`
-          : `${typeKindStr} type ${type.name} must implement ${transitive.name} because it is implemented by ${iface.name}.`,
-        getAllImplementsInterfaceNodes(type, iface),
+          ? `Type ${type.name} cannot implement ${iface.name} because it would create a circular reference.`
+          : `Type ${type.name} must implement ${transitive.name} because it is implemented by ${iface.name}.`,
+        [
+          ...getAllImplementsInterfaceNodes(iface, transitive),
+          ...getAllImplementsInterfaceNodes(type, iface),
+        ],
       );
     }
   }
