@@ -369,11 +369,9 @@ function typeMapReducer(map: TypeMap, type: ?GraphQLType): TypeMap {
     reducedMap = namedType.getTypes().reduce(typeMapReducer, reducedMap);
   }
 
-  if (isObjectType(namedType)) {
-    reducedMap = namedType.getInterfaces().reduce(typeMapReducer, reducedMap);
-  }
-
   if (isObjectType(namedType) || isInterfaceType(namedType)) {
+    reducedMap = namedType.getInterfaces().reduce(typeMapReducer, reducedMap);
+
     for (const field of objectValues(namedType.getFields())) {
       const fieldArgTypes = field.args.map(arg => arg.type);
       reducedMap = fieldArgTypes.reduce(typeMapReducer, reducedMap);
